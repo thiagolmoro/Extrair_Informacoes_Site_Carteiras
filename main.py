@@ -8,9 +8,9 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Lista de carteiras a serem acessadas
-carteiras = ["N045616397", "N105616397", "N205616397",
-             "N345616397", "N875616397", "N975616397"]  # Adicione mais carteiras conforme necessário
+# Ler carteiras do arquivo CSV
+carteiras_df = pd.read_csv("carteiras_recomendadas.csv", sep=';')
+carteiras = carteiras_df["Num_Carteiras"].dropna().astype(str).tolist()
 
 # Função para calcular a data final
 def calcular_data_final():
@@ -61,7 +61,7 @@ for carteira in carteiras:
     valor_inv_inicial = re.sub(r'R\$\s*', '', get_element_text('/html/body/div[3]/div/div[3]/div[4]/div/div/h3'))
     valor_saque = re.sub(r'R\$\s*', '', get_element_text('/html/body/div[3]/div/div[3]/div[9]/div/div/h3').replace("/mês", ""))
     valor_reais_por_contrato = get_element_text('/html/body/div[3]/div/div[3]/div[6]/div/div/h3')
-    numero_sqn = re.search(r"[\d,]+", get_element_text('//*[@id="datatable-buttons"]/tbody/tr[15]/td[8]', "NaN"))
+    numero_sqn = re.search(r"[\d,]+", get_element_text('/html/body/div[3]/div/h3', "NaN"))
     numero_sqn = numero_sqn.group() if numero_sqn else "NaN"
     
     navegador.find_element(By.XPATH, '//*[@id="btn-mais1"]/i').click()
@@ -69,14 +69,21 @@ for carteira in carteiras:
 
     dados_dd = get_element_text('//*[@id="mais1"]/div[2]/div/div')
     percentual_dd, data_dd_formatada = "0", "0"
-    match = re.search(r"(\d+)%.*?(\d{2})/(\d{2})/(\d{2})", dados_dd)
+        
+    match = re.search(r"(-?\d+)%.*?(\d{2})/(\d{2})/(\d{2})", dados_dd)
     if match:
-        percentual_dd = int(match.group(1))
+        percentual_dd = match.group(1)  # Agora captura corretamente valores negativos também
         dia, mes, ano = match.group(2), match.group(3), match.group(4)
         data_dd_formatada = f"20{ano}{mes}{dia}"
-        percentual_restante = 100 - percentual_dd
+
+        if int(percentual_dd) < 0:
+            percentual_restante = 100 + abs(int(percentual_dd))
+        else:
+            percentual_restante = 100 - int(percentual_dd)
     else:
+        percentual_dd = "0"
         percentual_restante = "0"
+
 
     valor_melhor_dia = re.search(r'R\$\s([\d\.]+)', get_element_text('//*[@id="mais1"]/div[8]/div/div/h5/span'))
     valor_melhor_dia = valor_melhor_dia.group(1) if valor_melhor_dia else "0"
