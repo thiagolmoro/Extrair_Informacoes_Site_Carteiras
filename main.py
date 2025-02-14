@@ -34,7 +34,7 @@ dados_gerais = []
 for carteira in carteiras:
     url = f"https://tradergrafico.com.br/carteiras/?Simu={carteira}"
     navegador.get(url)
-    time.sleep(15)  # Aguarda o carregamento da página
+    time.sleep(30)  # Aguarda o carregamento da página
 
     # Fecha o pop-up, se existir
     try:
@@ -63,6 +63,18 @@ for carteira in carteiras:
     valor_reais_por_contrato = get_element_text('/html/body/div[3]/div/div[3]/div[6]/div/div/h3')
     numero_sqn = re.search(r"[\d,]+", get_element_text('/html/body/div[3]/div/h3', "NaN"))
     numero_sqn = numero_sqn.group() if numero_sqn else "NaN"
+
+    # Usa regex para extrair os valores (incluindo negativos)
+    valor_texto = navegador.find_element(By.XPATH, '/html/body/div[3]/div/div[3]/div[4]/div/div/p').text.strip()    
+    match = re.search(r'-?R\$\s*([-?\d,.]+)', valor_texto)  # captura números, incluindo negativos
+    percentual_match = re.search(r'-?\d+%', valor_texto)  # Captura também percentuais negativos
+    if match:
+        raw_value = match.group(1).replace('.', '').replace(',', '.')
+        valor_inv_atual = f"{int(float(raw_value)):,}".replace(',', '.')
+    else:
+        valor_inv_atual = None
+    percentual_inv_atual = percentual_match.group(0).replace('%', '') if percentual_match else None
+
     
     #Acessar as informações Detalhadas da Carteira
     navegador.find_element(By.XPATH, '//*[@id="btn-mais1"]/i').click()
@@ -98,11 +110,12 @@ for carteira in carteiras:
 
 
     # Pegar a quantidade de Robôs da Carteira
+
     botao = navegador.find_element(By.XPATH, '//*[@id="btn-mais2"]')
     navegador.execute_script("arguments[0].click();", botao)
     time.sleep(3)
-    
-    # Captura a tabela com os Robôs
+
+    # Captura a tabela
     tabela = navegador.find_element(By.XPATH, '//*[@id="mais2"]/div[1]/div/div')
 
     # Extrai o texto da tabela
@@ -125,6 +138,8 @@ for carteira in carteiras:
         "DataInicio": data_formatada,
         "DataFinal": data_final_formatada,
         "InvIni": valor_inv_inicial,
+        "InvAtual": valor_inv_atual,
+        "PercInvAtual": percentual_inv_atual,
         "Saque": valor_saque,
         "DrawdownPerct": percentual_restante,
         "DrawdownDate": data_dd_formatada,
