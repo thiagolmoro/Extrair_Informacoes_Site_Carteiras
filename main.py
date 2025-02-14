@@ -64,6 +64,7 @@ for carteira in carteiras:
     numero_sqn = re.search(r"[\d,]+", get_element_text('/html/body/div[3]/div/h3', "NaN"))
     numero_sqn = numero_sqn.group() if numero_sqn else "NaN"
     
+    #Acessar as informações Detalhadas da Carteira
     navegador.find_element(By.XPATH, '//*[@id="btn-mais1"]/i').click()
     time.sleep(3)
 
@@ -94,7 +95,31 @@ for carteira in carteiras:
     melhor_media_10_dias = re.sub(r'R\$ \+|/dia', '', get_element_text('//*[@id="mais1"]/div[16]/div/div/h3/span'))
     valor_r_quadrado_geral = get_element_text('//*[@id="mais1"]/div[18]/table/tbody/tr[2]/td[4]')
     valor_acerto_geral = get_element_text('//*[@id="mais1"]/div[18]/table/tbody/tr[1]/td[4]').replace('%', '').strip()
+
+
+    # Pegar a quantidade de Robôs da Carteira
+    botao = navegador.find_element(By.XPATH, '//*[@id="btn-mais2"]')
+    navegador.execute_script("arguments[0].click();", botao)
+    time.sleep(3)
     
+    # Captura a tabela com os Robôs
+    tabela = navegador.find_element(By.XPATH, '//*[@id="mais2"]/div[1]/div/div')
+
+    # Extrai o texto da tabela
+    tabela_texto = tabela.text
+
+    # Expressão regular para encontrar a última linha com um robô
+    padrao = r"^(\d+)\s+(Top Hedger|Fornecedor).*"
+
+    # Encontrar todas as ocorrências
+    matches = re.findall(padrao, tabela_texto, re.MULTILINE)
+
+    if matches:
+        quantidade_robos = int(matches[-1][0])  # Pega o número da última correspondência
+    else:
+        quantidade_robos = 0
+    
+
     dados_gerais.append({
         "Simu": numero_carteira,
         "DataInicio": data_formatada,
@@ -112,7 +137,8 @@ for carteira in carteiras:
         "SQN": numero_sqn,
         "R2geral": valor_r_quadrado_geral,
         "AcertoGeral": valor_acerto_geral,
-        "MargemMin": percentual_dd
+        "MargemMin": percentual_dd,
+        "QdteRobos": quantidade_robos
     })
 
 navegador.quit()
