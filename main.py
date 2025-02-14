@@ -34,7 +34,7 @@ dados_gerais = []
 for carteira in carteiras:
     url = f"https://tradergrafico.com.br/carteiras/?Simu={carteira}"
     navegador.get(url)
-    time.sleep(30)  # Aguarda o carregamento da página
+    time.sleep(15)  # Aguarda o carregamento da página
 
     # Fecha o pop-up, se existir
     try:
@@ -65,7 +65,7 @@ for carteira in carteiras:
     numero_sqn = numero_sqn.group() if numero_sqn else "NaN"
 
     # Usa regex para extrair os valores (incluindo negativos)
-    valor_texto = navegador.find_element(By.XPATH, '/html/body/div[3]/div/div[3]/div[4]/div/div/p').text.strip()    
+    valor_texto = get_element_text('/html/body/div[3]/div/div[3]/div[4]/div/div/p')
     match = re.search(r'-?R\$\s*([-?\d,.]+)', valor_texto)  # captura números, incluindo negativos
     percentual_match = re.search(r'-?\d+%', valor_texto)  # Captura também percentuais negativos
     if match:
