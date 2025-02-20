@@ -31,10 +31,12 @@ navegador = webdriver.Chrome(service=service, options=chrome_options)
 
 dados_gerais = []
 
-for carteira in carteiras:
+contador = 0
+
+for carteira in carteiras:   
     url = f"https://tradergrafico.com.br/carteiras/?Simu={carteira}"
     navegador.get(url)
-    time.sleep(15)  # Aguarda o carregamento da página
+    time.sleep(30)  # Aguarda o carregamento da página
 
     # Fecha o pop-up, se existir
     try:
@@ -155,6 +157,9 @@ for carteira in carteiras:
         "MargemMin": percentual_dd,
         "QdteRobos": quantidade_robos
     })
+
+    contador += 1
+    print(f'{contador}ª Carteira analisada: {carteira}')
 
 navegador.quit()
 
